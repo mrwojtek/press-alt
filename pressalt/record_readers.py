@@ -425,7 +425,7 @@ def read_binary(log_file, reader):
         reader.on_start(time, 0, version)
         binary = f.read(10)
         while binary:
-            (data_type, time) = struct.unpack('!hq', binary)
+            data_type, time = struct.unpack('!hq', binary)
             read_fun(time, data_type, f, reader)
             binary = f.read(10)
             
@@ -433,7 +433,8 @@ def read_binary(log_file, reader):
         reader.on_start(time, start_time, version)
         binary = f.read(4)
         while binary:
-            read_fun(*struct.unpack('!hh', binary), version, f, reader)
+            type, device = struct.unpack('!hh', binary)
+            read_fun(type, device, version, f, reader)
             binary = f.read(4)
         
     magic_word = b'SensorsRecord'

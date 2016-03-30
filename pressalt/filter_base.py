@@ -62,16 +62,16 @@ class SmootherBase:
             do_pressure = ip < len(pressure_events)
             if do_gps and do_pressure:
                 if gps_events[ia][0] < pressure_events[ip][0]:
-                    self.on_gps(*gps_events[ia], False)
+                    self.on_gps(*gps_events[ia], backward=False)
                     ia += 1
                 else:
-                    self.on_pressure(*pressure_events[ip], last_pressure)
+                    self.on_pressure(*pressure_events[ip], backward=last_pressure)
                     ip += 1
             elif do_gps:
-                self.on_gps(*gps_events[ia], False)
+                self.on_gps(*gps_events[ia], backward=False)
                 ia += 1
             elif do_pressure:
-                self.on_pressure(*pressure_events[ip], last_pressure)
+                self.on_pressure(*pressure_events[ip], backward=last_pressure)
                 ip += 1
             else:
                 break
@@ -83,16 +83,16 @@ class SmootherBase:
             do_pressure = ip >= 0
             if do_gps and do_pressure:
                 if gps_events[ia][0] > pressure_events[ip][0]:
-                    self.on_gps(*gps_events[ia], True)
+                    self.on_gps(*gps_events[ia], backward=True)
                     ia -= 1
                 else:
-                    self.on_pressure(*pressure_events[ip], True)
+                    self.on_pressure(*pressure_events[ip], backward=True)
                     ip -= 1
             elif do_gps:
-                self.on_gps(*gps_events[ia], True)
+                self.on_gps(*gps_events[ia], backward=True)
                 ia -= 1
             elif do_pressure:
-                self.on_pressure(*pressure_events[ip], True)
+                self.on_pressure(*pressure_events[ip], backward=True)
                 ip -= 1
             else:
                 break
