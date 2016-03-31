@@ -36,8 +36,6 @@ class GeoFile:
         
     def values(self, x, y, proj=pyproj.Proj('+init=EPSG:4326'), geoid=None):
         assert(len(x) == len(y))
-
-        print("x:%r, y:%r", x[0], y[0])
         
         pixels_x = np.empty(len(x))
         pixels_y = np.empty(len(y))
