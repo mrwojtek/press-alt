@@ -34,8 +34,10 @@ class GeoFile:
         
         band = self.dataset.GetRasterBand(band)
         
-    def values(self, x, y, proj=pyproj.Proj('+init=EPSG:4326')):
+    def values(self, x, y, proj=pyproj.Proj('+init=EPSG:4326'), geoid=None):
         assert(len(x) == len(y))
+
+        print("x:%r, y:%r", x[0], y[0])
         
         pixels_x = np.empty(len(x))
         pixels_y = np.empty(len(y))
@@ -52,12 +54,16 @@ class GeoFile:
         Mx = min(rx, int(np.ceil(np.max(pixels_x))))
         my = max(0, int(np.floor(np.min(pixels_y))))
         My = min(ry, int(np.ceil(np.max(pixels_y))))
-        
+
         if 0 <= Mx and mx <= rx and 0 <= My and my <= ry:
             v = self.dataset.ReadAsArray(mx, my, Mx-mx+1, My-my+1).astype(float)
-            f = interpolate.interp2d(range(mx, Mx+1), range(my, My+1), v, bounds_error=False,
-                                     fill_value=np.NaN)
-            return np.array([f(pixels_x[i], pixels_y[i]) for i in range(len(x))])
+            hi = interpolate.interp2d(range(mx, Mx+1), range(my, My+1), v, copy=False,
+                                      bounds_error=False, fill_value=np.NaN)
+            if geoid:
+                h = lambda i: geoid.EllipsoidHeight(y[i], x[i], hi(pixels_x[i], pixels_y[i])[0])
+            else:
+                h = lambda i: hi(pixels_x[i], pixels_y[i])[0]
+            return np.array([h(i) for i in range(len(x))])
         else:
             return np.ones(len(x))*np.NaN
     
@@ -76,12 +82,12 @@ class GeoFiles:
     def __init__(self, files):
         self.files = [GeoFile(file) for file in files]
         
-    def values(self, x, y, proj=pyproj.Proj('+init=EPSG:4326')):
+    def values(self, x, y, proj=pyproj.Proj('+init=EPSG:4326'), geoid=None):
         assert(len(x) == len(y))
         
         r = np.ones(len(x))*np.NaN
         for f in self.files:
-            v = f.values(x, y, proj)
+            v = f.values(x, y, proj, geoid)
             i = ml.find(np.isfinite(v))
             r[i] = v[i]
         return r
