@@ -20,8 +20,36 @@ import pressalt
 import matplotlib.pyplot as plt
 
 
-def plot_altitude(file, tight, width, height, dpi, x_min, x_turn, y_lim, gps_x=None, gps_alt=None,
-                  gps_elev=None, press_x=None, press_alt=None, press_alt_sd=None):
+def plot_plot(file, fig, ax, tight, xlabel, ylabel, loc, title=None):
+    if tight:
+        ax.legend(loc=loc, prop={'size': 9})
+        ax.set_xlabel(xlabel, fontsize=9)
+        ax.set_ylabel(ylabel, fontsize=9)
+        ax.tick_params(axis='both', which='major', labelsize=9)
+        if title is not None:
+            ax.set_title(title, fontsize=9)
+            fig.subplots_adjust(0.1, 0.13, 0.985, 0.93)
+        else:
+            fig.subplots_adjust(0.1, 0.13, 0.985, 0.97)
+    else:
+        ax.legend(loc=loc, prop={'size': 9})
+        ax.set_xlabel(xlabel, fontsize=10)
+        ax.set_ylabel(ylabel, fontsize=10)
+        ax.tick_params(axis='both', which='major', labelsize=9)
+        if title is not None:
+            ax.set_title(title, fontsize=12)
+            fig.subplots_adjust(0.13, 0.15, 0.95, 0.9)
+        else:
+            fig.subplots_adjust(0.13, 0.15, 0.95, 0.95)
+
+    if file is not None:
+        fig.savefig(file)
+    else:
+        plt.pause(0)
+
+
+def plot_altitude(file, tight, width, height, dpi, loc, title, x_min, x_turn, y_lim, gps_x=None,
+                  gps_alt=None, gps_elev=None, press_x=None, press_alt=None, press_alt_sd=None):
     fig = plt.figure(figsize=(width, height), dpi=dpi)
     plt.ylim(y_lim)
     ax = fig.add_subplot(111)
@@ -47,16 +75,7 @@ def plot_altitude(file, tight, width, height, dpi, x_min, x_turn, y_lim, gps_x=N
 
     ax.set_xlim([x_min, x_turn])
 
-    if tight:
-        ax.legend(loc='upper right', prop={'size': 9})
-        ax.set_xlabel('Distance [km]', fontsize=9)
-        ax.set_ylabel('Altitude [m]', fontsize=9)
-        ax.tick_params(axis='both', which='major', labelsize=9)
-        fig.subplots_adjust(0.1, 0.13, 0.985, 0.97)
-    else:
-        ax.legend(loc='upper left')
-        ax.set_xlabel('Distance [km]')
-        ax.set_ylabel('Altitude [m]')
+    plot_plot(file, fig, ax, tight, 'Distance [km]', 'Altitude [m]', loc, title)
 
     if file is not None:
         fig.savefig(file)
@@ -79,14 +98,15 @@ def plot_forest(reader, filter, prefix, tight=True, width=6.4, height=3.6, dpi=1
     x_turn = 3.11
     y_lim = ([105, 155])
 
-    plot_altitude('%s-gps.png' % prefix, tight, width, height, dpi, x_min, x_turn, y_lim, gps_dist,
-                  gps_alt)
-    plot_altitude('%s-gps-srtm.png' % prefix, tight, width, height, dpi, x_min, x_turn, y_lim,
-                  gps_dist, gps_alt, gps_elev)
-    plot_altitude('%s-gps-srtm-press.png' % prefix, tight, width, height, dpi, x_min, x_turn,
-                  y_lim, gps_dist, gps_alt, gps_elev, press_dist, press_alt)
-    plot_altitude('%s-press-sd.png' % prefix, tight, width, height, dpi, x_min, x_turn, y_lim,
-                  None, None, None, press_dist, press_alt, press_alt_sd)
+    plot_altitude('%s-gps.png' % prefix, tight, width, height, dpi, 'upper right', None, x_min,
+                  x_turn, y_lim, gps_dist, gps_alt)
+    plot_altitude('%s-gps-srtm.png' % prefix, tight, width, height, dpi, 'upper right', None,
+                  x_min, x_turn, y_lim, gps_dist, gps_alt, gps_elev)
+    plot_altitude('%s-gps-srtm-press.png' % prefix, tight, width, height, dpi, 'upper right', None,
+                  x_min, x_turn, y_lim, gps_dist, gps_alt, gps_elev, press_dist, press_alt)
+    plot_altitude('%s-press-sd.png' % prefix, tight, width, height, dpi, 'upper right',
+                  filter.__class__.__name__, x_min, x_turn, y_lim, None, None, None, press_dist,
+                  press_alt, press_alt_sd)
 
 
 def plot_pressures(reader, filters, prefix, tight=True, width=6.4, height=3.6, dpi=100):
@@ -99,30 +119,17 @@ def plot_pressures(reader, filters, prefix, tight=True, width=6.4, height=3.6, d
     fig = plt.figure(figsize=(width, height), dpi=dpi)
     ax = fig.add_subplot(111)
 
-    ax.plot(press_dist, press_press, '#03a9f4', alpha=0.9, label='Pressure')
+    ax.plot(press_dist, press_press, '#03a9f4', alpha=0.9, label='Measured')
 
     for _, filter, color in filters:
         ax.plot(press_dist, filter.pressure_msl(), color, alpha=0.9,
-                label='MSL Pressure (%s)' % filter.__class__.__name__)
+                label='MSL (%s)' % filter.__class__.__name__)
 
     ax.set_xlim(x_lim)
     ax.set_ylim(y_lim)
 
-    if tight:
-        ax.legend(loc='upper right', prop={'size': 9})
-        ax.set_xlabel('Distance [km]', fontsize=9)
-        ax.set_ylabel('Pressure [hPa]', fontsize=9)
-        ax.tick_params(axis='both', which='major', labelsize=9)
-        fig.subplots_adjust(0.1, 0.13, 0.985, 0.97)
-    else:
-        ax.legend(loc='upper left')
-        ax.set_xlabel('Distance [km]')
-        ax.set_ylabel('Pressure [hPa]')
-
-    if prefix is not None:
-        fig.savefig('%s-pressures.png' % prefix)
-    else:
-        plt.pause(0)
+    file = '%s-pressures.png' % prefix if prefix is not None else None
+    plot_plot(file, fig, ax, tight, 'Distance [km]', 'Pressure [hPa]', 'upper right', 'Pressures')
 
 
 # Import and load the SRTM elevation data
@@ -146,11 +153,11 @@ filters = [('forest-af', pressalt.AltitudeFilter(), '#3f51b5'),
            ('forest-ars', pressalt.AltitudeRateSmoother(), '#e91e63')]
 
 # Read recorder file
-reader = pressalt.read_binary('records/forest-20130728.bin', pressalt.GpsPressureReader())
+reader = pressalt.read_binary('records/forest-20130728.bin', pressalt.GpsPressureReader(), True)
 reader.export_to_kml('forest.kml')
 
 # Filter and smooth the record
 for prefix, filter, _ in filters:
     filter.execute(reader.gps_events, reader.press_events)
-    plot_forest(reader, filter, prefix, elev=elevation, geoid=geoid)
-plot_pressures(reader, filters, 'forest')
+    plot_forest(reader, filter, prefix, tight=False, elev=elevation, geoid=geoid, width=7.0)
+plot_pressures(reader, filters, 'forest', tight=False, width=7.0)

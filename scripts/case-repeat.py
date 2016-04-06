@@ -34,10 +34,11 @@ def plot_plot(file, fig, ax, tight, xlabel, ylabel, loc, title=None):
         else:
             fig.subplots_adjust(0.1, 0.13, 0.985, 0.97)
     else:
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel, fontsize=10)
+        ax.set_ylabel(ylabel, fontsize=10)
+        ax.tick_params(axis='both', which='major', labelsize=9)
         if title is not None:
-            ax.set_title(title)
+            ax.set_title(title, fontsize=12)
             fig.subplots_adjust(0.13, 0.15, 0.95, 0.9)
         else:
             fig.subplots_adjust(0.13, 0.15, 0.95, 0.95)
@@ -91,7 +92,7 @@ class AltitudePressMoved:
 
     def __call__(self, file, reader, filter):
         if self.smooth:
-            alt = reader.smooth_wavelet(filter.altitude_gps(), 3)
+            alt = reader.smooth_wavelet(filter.altitude_gps(), 4)
         else:
             alt = filter.altitude_gps()
         i, iw, d = self.ref_reader.match_points(reader.gps_coordinates(), 10.0)
@@ -143,12 +144,15 @@ for file in files:
     if file in files_g:
         filters_g.append((file, reader, filter))
 
-plot_altitudes(filters_g, altitude_gps, None, 'repeat-gps-9.png', 'GPS Altitude')
-plot_altitudes(filters, altitude_press, None, 'repeat-press-16.png', 'Filtered Altitude')
+plot_altitudes(filters_g, altitude_gps, None, 'repeat-gps-9.png', 'GPS Altitude', tight=True,
+               width=7.0)
+plot_altitudes(filters, altitude_press, None, 'repeat-press-16.png', 'Filtered Altitude',
+               tight=True, width=7.0)
 
 apm = AltitudePressMoved(filters[0][1], filters[0][2])
 plot_altitudes(filters, apm, apm.elevation(elevation, geoid), 'repeat-press-moved-16.png',
-               'Filtered Altitude (positioned)')
+               'Filtered Altitude (positioned)', tight=True, width=7.0)
+
 apms = AltitudePressMoved(filters[0][1], filters[0][2], True)
 plot_altitudes(filters, apms, apms.elevation(elevation, geoid), 'repeat-press-moved-smooth-16.png',
-               'Filtered Altitude (positioned, smoothed)')
+               'Filtered Altitude (positioned, smoothed)', tight=True, width=7.0)

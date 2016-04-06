@@ -33,10 +33,11 @@ def plot_plot(file, fig, ax, tight, xlabel, ylabel, loc, title=None):
             fig.subplots_adjust(0.1, 0.13, 0.985, 0.97)
     else:
         ax.legend(loc=loc, prop={'size': 9})
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel, fontsize=10)
+        ax.set_ylabel(ylabel, fontsize=10)
+        ax.tick_params(axis='both', which='major', labelsize=9)
         if title is not None:
-            ax.set_title(title)
+            ax.set_title(title, fontsize=12)
             fig.subplots_adjust(0.13, 0.15, 0.95, 0.9)
         else:
             fig.subplots_adjust(0.13, 0.15, 0.95, 0.95)
@@ -165,6 +166,6 @@ reader.export_to_kml('milos.kml')
 # Filter and smooth the record
 for prefix, filter, _ in filters:
     filter.execute(reader.gps_events, reader.press_events)
-    plot_milos(reader, filter, prefix, tight=False, elev=elevation, geoid=geoid)
-plot_altitudes(reader, filters, 'milos', tight=False)
-plot_pressures(reader, filters, 'milos', tight=False)
+    plot_milos(reader, filter, prefix, tight=False, width=7.0, elev=elevation, geoid=geoid)
+plot_altitudes(reader, filters, 'milos', tight=False, width=7.0)
+plot_pressures(reader, filters, 'milos', tight=False, width=7.0)
