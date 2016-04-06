@@ -17,6 +17,7 @@
 from .record_readers import *
 import uuid
 import struct
+import numpy as np
 
 DEVICE_NAME_UUID = uuid.UUID('{00002a00-0000-1000-8000-00805f9b34fb}')
 APPEARANCE_UUID = uuid.UUID('{00002a01-0000-1000-8000-00805f9b34fb}')
@@ -46,13 +47,18 @@ HEART_RATE_RR_INTERVALS_PRESENT = 0x10
 class HeartRateReader(RecordReader):
 
     def __init__(self):
+        RecordReader.__init__(self)
+
         self.metadata = {}
         self.milliseconds = []
         self.flags = []
         self.values = []
         self.energies_expanded = []
         self.rr_intervals = []
-        
+
+    def seconds(self):
+        return self.time_to_seconds(np.array(self.milliseconds))
+
     def expand_rr_intervals(self):
         milliseconds = []
         rr_intervals = []
@@ -61,9 +67,10 @@ class HeartRateReader(RecordReader):
                 for rr in self.rr_intervals[i]:
                     milliseconds.append(self.milliseconds[i])
                     rr_intervals.append(rr)
-        return milliseconds, rr_intervals
+        return self.time_to_seconds(np.array(milliseconds)), rr_intervals
       
     def on_ble(self, device, millisecond, ble_uuid, value):
+        self.update_time(millisecond)
         if ble_uuid == DEVICE_NAME_UUID:
             self.on_device_name(millisecond, value.decode('utf-8'))
         if ble_uuid == APPEARANCE_UUID:

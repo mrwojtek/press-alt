@@ -35,7 +35,7 @@ class AltitudeRateSmoother(SmootherBase):
         self._P0 = P0
 
         self._altitude_gps = list()
-        self._altitude_sd_gps = list()
+        self._altitude_gps_sd = list()
         self._altitude = list()
         self._altitude_sd = list()
         self._pressure_msl = list()
@@ -52,8 +52,8 @@ class AltitudeRateSmoother(SmootherBase):
     def altitude_gps(self):
         return np.array(self._altitude_gps)
 
-    def altitude_sd_gps(self):
-        return np.array(self._altitude_sd_gps)
+    def altitude_gps_sd(self):
+        return np.array(self._altitude_gps_sd)
 
     def altitude(self):
         return np.array(self._altitude)
@@ -67,7 +67,7 @@ class AltitudeRateSmoother(SmootherBase):
     def execute(self, gps_events, pressure_events):
         SmootherBase.execute(self, gps_events, pressure_events)
         self._altitude_gps.reverse()
-        self._altitude_sd_gps.reverse()
+        self._altitude_gps_sd.reverse()
         self._altitude.reverse()
         self._pressure_msl.reverse()
 
@@ -79,7 +79,7 @@ class AltitudeRateSmoother(SmootherBase):
             self._on_measurement(altitude - self._x[0], H, MR)
         if backward:
             self._altitude_gps.append(self._x[0])
-            self._altitude_sd_gps.append(self._P[0, 0])
+            self._altitude_gps_sd.append(self._P[0, 0])
 
     def on_pressure(self, time, pressure, backward):
         # Simple filter for discarding very noisy pressure measurements, this

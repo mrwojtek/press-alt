@@ -1,6 +1,6 @@
 # Pressure Altitude Filters
 
-Altitude determination from the fusion of GPS and barometer pressure
+Altitude estimation from the fusion of GPS and barometer pressure
 measurements.
 
-*Work in progress as of March 30, 2016*
+*Work in progress as of April 6, 2016*

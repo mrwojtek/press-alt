@@ -31,6 +31,33 @@ class RecordReaderError(Exception):
 
 class RecordReader:
 
+    def __init__(self):
+        self.start_time = None
+        self.end_time = None
+
+    def update_time(self, millisecond):
+        if not self.start_time:
+            self.start_time = millisecond
+        self.end_time = millisecond
+
+    def expand_time(self, start_time, end_time):
+        if start_time < self.start_time:
+            self.start_time = start_time
+        if end_time > self.end_time:
+            self.end_time = end_time
+
+    def time_range(self):
+        return self.start_time, self.end_time
+
+    def duration(self):
+        return (self.end_time - self.start_time) / 1000.0
+
+    def time_to_seconds(self, value):
+        return (value - self.start_time) / 1000.0
+
+    def time_to_unit(self, value):
+        return (value - self.start_time) / float(self.end_time - self.start_time)
+
     def on_sensor(self, type, device, time, timestamp, values):
         # TODO: Support the remaining sensors
         if type == 6:
@@ -112,6 +139,7 @@ class RecordReader:
 class RecordToText(RecordReader):
     
     def __init__(self, file=sys.stdout):
+        RecordReader.__init__(self)
         self.file = file
         self.sensor = {
             1: 'accel_%d',
@@ -419,7 +447,7 @@ def __read_binary_v12(type, device, version, f, reader):
         raise RecordReaderError('Binary data corruption (type=%d)' % type)
 
 
-def read_binary(log_file, reader):
+def read_binary(log_file, reader, legacy=False):
 
     def read_legacy(time, version, read_fun):
         reader.on_start(time, 0, version)
@@ -441,16 +469,7 @@ def read_binary(log_file, reader):
     
     with open(log_file, 'rb') as f:
         data_type, = struct.unpack('!h', f.read(2))
-        if data_type == 0:
-            # This is old legacy code which was never released.
-            time, version = struct.unpack('!qi', f.read(12))
-            if version == 1000:
-                read_legacy(time, version, __read_binary_v10)
-            elif version == 1100:
-                read_legacy(time, version, __read_binary_v11)
-            else:
-                raise RecordReaderError('Legacy format version error: %d' % version)
-        elif data_type == -1:
+        if data_type == -1:
             # Check the validity of a starting frame.
             zero, length, magic, version =\
                 struct.unpack('!hi%dsi' % len(magic_word), f.read(10 + len(magic_word)))
@@ -461,7 +480,23 @@ def read_binary(log_file, reader):
                 read_new(time, start_time, version, __read_binary_v12)
             else:
                 raise RecordReaderError('Record version unknown: %d' % version)
-                
+        elif legacy:
+            # This is old legacy code which was never released.
+            version = 1000
+            if data_type == 0:
+                time, version = struct.unpack('!qi', f.read(12))
+            else:
+                time = struct.unpack('!q', f.read(8))
+            if version == 1000:
+                __read_binary_v10(time, data_type, f, reader)
+                read_legacy(time, version, __read_binary_v10)
+            elif version == 1100:
+                read_legacy(time, version, __read_binary_v11)
+            else:
+                raise RecordReaderError('Legacy format version error: %d' % version)
+        else:
+            raise RecordReaderError('Invalid binary file format')
+
     return reader
 
 
@@ -474,7 +509,7 @@ def read_text(log_file, sensors_reader):
                 continue
             
             try:
-                millisecond = long(values[0])
+                millisecond = int(values[0])
                 data_type = values[1]
                 
                 if data_type == 'gyro_acc':
@@ -508,7 +543,7 @@ def read_text(log_file, sensors_reader):
                     bearing = float(values[5])
                     speed = float(values[6])
                     accuracy = float(values[7])
-                    time = long(values[8])
+                    time = int(values[8])
                     sensors_reader.on_gps(millisecond, latitude, longitude, altitude_geoid,
                                           bearing, speed, accuracy, time)
                 elif data_type == 'magn':

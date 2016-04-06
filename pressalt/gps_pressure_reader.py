@@ -33,6 +33,8 @@ class GpsPressureReader(RecordReader):
     PRESSURE_FACTOR = 0.0000225577
 
     def __init__(self):
+        RecordReader.__init__(self)
+
         self.gps_events = list()
         self.press_events = list()
 
@@ -50,9 +52,6 @@ class GpsPressureReader(RecordReader):
         self._press_altitude = list()
         self._press_distance = None
 
-        self._start_time = None
-        self._end_time = None
-
         self._last_altitude = None
         self._pressure_msl = None
 
@@ -64,7 +63,7 @@ class GpsPressureReader(RecordReader):
 
     def on_gps(self, millisecond, latitude, longitude, altitude_geoid, bearing, speed, accuracy,
                time):
-        self._update_time(millisecond)
+        self.update_time(millisecond)
         self.gps_events.append((millisecond, altitude_geoid, accuracy))
         self._gps_time.append(millisecond)
         self._gps_latitude.append(latitude)
@@ -75,27 +74,13 @@ class GpsPressureReader(RecordReader):
         self._last_altitude = altitude_geoid
 
     def on_pressure(self, millisecond, pressure):
-        self._update_time(millisecond)
+        self.update_time(millisecond)
         self.press_events.append((millisecond, pressure))
         self._press_time.append(millisecond)
         self._press_pressure.append(pressure)
 
         ap = self._find_altitude_pressure(pressure)
         self._press_altitude.append(ap if ap else np.NaN)
-
-    def _update_time(self, millisecond):
-        if not self._start_time:
-            self._start_time = millisecond
-        self._end_time = millisecond
-
-    def duration(self):
-        return (self._end_time - self._start_time) / 1000.0
-
-    def time_to_seconds(self, value):
-        return (value - self._start_time) / 1000.0
-
-    def time_to_unit(self, value):
-        return (value - self._start_time) / float(self._end_time - self._start_time)
 
     def gps_distance(self):
         if self._gps_distance is None:
@@ -223,12 +208,11 @@ class GpsPressureReader(RecordReader):
 
         return a_min, a_max, a_gain, a_loss, a[-1]-a[0]
 
-    def smooth(self, a):
-        filtern = 51
-        W = signal.slepian(filtern, width=0.05)
+    def smooth(self, a, filter_n=51, width=0.5):
+        W = signal.slepian(filter_n, width=width)
         W = W/np.sum(W)
         s = signal.convolve(a, W, mode='valid')
-        return np.hstack([[s[0]]*(filtern/2), s, [s[-1]]*(filtern/2)])
+        return np.hstack([[s[0]]*(filter_n//2), s, [s[-1]]*(filter_n//2)])
 
     def smooth_wavelet(self, data, levels=8, w='sym4', mode=pywt.MODES.sp1):
         w = pywt.Wavelet(w)
