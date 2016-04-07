@@ -111,48 +111,54 @@ class AltitudePressMoved:
         else:
             return None
 
-try:
-    # 90-m elevation data from http://srtm.csi.cgiar.org
-    elevation = pressalt.GeoFiles(['srtm/srtm_40_02/srtm_40_02.tif',
-                                   'srtm/srtm_41_02/srtm_41_02.tif',
-                                   'srtm/srtm_41_05/srtm_41_05.tif'])
-    # SRTM data is given with reference to the mean sea level surface.
-    # https://sourceforge.net/p/geographiclib/code/ci/v1.46/tree/wrapper/python/
+
+def initialize_elevation():
     try:
-        import PyGeographicLib
-        geoid = PyGeographicLib.Geoid("egm2008-1")
-    except ImportError as e:
-        warnings.warn("PyGeographicLib module is not available: %s" % str(e))
-        raise
-except (AttributeError, ImportError):
-    elevation = None
-    geoid = None
+        # 90-m elevation data from http://srtm.csi.cgiar.org
+        elevation = pressalt.GeoFiles(['srtm/srtm_40_02/srtm_40_02.tif',
+                                       'srtm/srtm_41_02/srtm_41_02.tif',
+                                       'srtm/srtm_41_05/srtm_41_05.tif'])
+        # SRTM data is given with reference to the mean sea level surface.
+        # https://sourceforge.net/p/geographiclib/code/ci/v1.46/tree/wrapper/python/
+        try:
+            import PyGeographicLib
+            geoid = PyGeographicLib.Geoid("egm2008-1")
+        except ImportError as e:
+            warnings.warn("PyGeographicLib module is not available: %s" % str(e))
+            raise
+        return elevation, geoid
+    except (AttributeError, ImportError):
+        return None, None
 
-files = glob.glob('records/repeat/*')
-files_g = set(glob.glob('records/repeat/*-g.*'))
-filters = []
-filters_g = []
-for file in files:
-    reader = pressalt.GpsPressureReader()
-    if file.endswith('log'):
-        pressalt.read_text(file, reader)
-    else:
-        pressalt.read_binary(file, reader, True)
-    filter = pressalt.AltitudeRateSmoother()
-    filter.execute(reader.gps_events, reader.press_events)
-    filters.append((file, reader, filter))
-    if file in files_g:
-        filters_g.append((file, reader, filter))
 
-plot_altitudes(filters_g, altitude_gps, None, 'repeat-gps-9.png', 'GPS Altitude', tight=True,
-               width=7.0)
-plot_altitudes(filters, altitude_press, None, 'repeat-press-16.png', 'Filtered Altitude',
-               tight=True, width=7.0)
+if __name__ == '__main__':
+    elevation, geoid = initialize_elevation()
+    files = glob.glob('records/repeat/*')
+    files_g = set(glob.glob('records/repeat/*-g.*'))
+    filters = []
+    filters_g = []
+    for file in files:
+        reader = pressalt.GpsPressureReader()
+        if file.endswith('log'):
+            pressalt.read_text(file, reader)
+        else:
+            pressalt.read_binary(file, reader, True)
+        filter = pressalt.AltitudeRateSmoother()
+        filter.execute(reader.gps_events, reader.press_events)
+        filters.append((file, reader, filter))
+        if file in files_g:
+            filters_g.append((file, reader, filter))
 
-apm = AltitudePressMoved(filters[0][1], filters[0][2])
-plot_altitudes(filters, apm, apm.elevation(elevation, geoid), 'repeat-press-moved-16.png',
-               'Filtered Altitude (positioned)', tight=True, width=7.0)
+    plot_altitudes(filters_g, altitude_gps, None, 'repeat-gps-9.png', 'GPS Altitude', tight=True,
+                   width=7.0)
+    plot_altitudes(filters, altitude_press, None, 'repeat-press-16.png', 'Filtered Altitude',
+                   tight=True, width=7.0)
 
-apms = AltitudePressMoved(filters[0][1], filters[0][2], True)
-plot_altitudes(filters, apms, apms.elevation(elevation, geoid), 'repeat-press-moved-smooth-16.png',
-               'Filtered Altitude (positioned, smoothed)', tight=True, width=7.0)
+    apm = AltitudePressMoved(filters[0][1], filters[0][2])
+    plot_altitudes(filters, apm, apm.elevation(elevation, geoid), 'repeat-press-moved-16.png',
+                   'Filtered Altitude (positioned)', tight=True, width=7.0)
+
+    apms = AltitudePressMoved(filters[0][1], filters[0][2], True)
+    plot_altitudes(filters, apms, apms.elevation(elevation, geoid),
+                   'repeat-press-moved-smooth-16.png', 'Filtered Altitude (positioned, smoothed)',
+                   tight=True, width=7.0)

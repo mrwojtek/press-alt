@@ -259,42 +259,44 @@ variables_heart_rate = {'heart_rate', 'heart_rr'}
 x_unit = ['Time', 'Distance']
 x_unit_label = {'Time': 'Time [s]', 'Distance': 'Distance [km]'}
 
-parser = argparse.ArgumentParser(description='Convert binary recording to the text file.',
-                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('file', type=str,
-                    help='Recording file, for *.log or *.txt files text reader is used.')
-parser.add_argument('-o', '--output', dest='output', help='Output image file.')
-parser.add_argument('-k', '--kml', dest='kml', help='Output kml file.')
-parser.add_argument('-d', '--dem', dest='dem', nargs='+', help='Digital elevation map files.')
-parser.add_argument('-g', '--geoid', dest='geoid', help='Geoid model to use as described in ' +
-                    'http://geographiclib.sourceforge.net/html/geoid.html. ' +
-                    'Used with --dem option.')
-parser.add_argument('-f', dest='filter', choices=filters_name, default='AltitudeRateSmoother',
-                    help='Filtering algorithm to use.')
-parser.add_argument('-x', dest='x_unit', choices=x_unit, default='Time',
-                    help='Unit of the horizontal axis.')
-parser.add_argument('-1', dest='axis_1', choices=variables, nargs='+',
-                    help='Variable to be plotted on a first vertical axis.')
-parser.add_argument('-2', dest='axis_2', choices=variables, nargs='+',
-                    help='Variable to be plotted on a second vertical axis.')
-parser.add_argument('--legacy', action='store_true', help='Use legacy binary mode.')
-parser.add_argument('--width', dest='width', type=float, default=6.4, help='Plot width.')
-parser.add_argument('--height', dest='height', type=float, default=3.6, help='Plot height.')
-parser.add_argument('--dpi', dest='dpi', type=float, default=100, help='Plot height.')
-parser.add_argument('--legend', dest='legend', help='Plot legend location.')
-parser.add_argument('--dpss-smooth', dest='dpss_smooth', action='store_true',
-                    help='Smooth the filtered results using digital Slepian window.')
-parser.add_argument('--dpss-n', dest='dpss_n', type=int, default=51,
-                    help='Digital Slepian window size.')
-parser.add_argument('--dpss-width', dest='dpss_width', type=float, default=0.5,
-                    help='Digital Slepian window width.')
-parser.add_argument('--wavelet-smooth', dest='wavelet_smooth', action='store_true',
-                    help='Smooth the filtered results using wavelet cut-off.')
-parser.add_argument('--wavelet-levels', dest='wavelet_levels', type=int, default=8,
-                    help='Wavelet level for smoothing cut-off.')
-parser.add_argument('--wavelet', choices=pywt.wavelist(), dest='wavelet', default='sym4',
-                    help='Wavelet function to use, see pywt.wavelist().')
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Convert binary recording to the text file.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('file', type=str,
+                        help='Recording file, for *.log or *.txt files text reader is used.')
+    parser.add_argument('-o', '--output', dest='output', help='Output image file.')
+    parser.add_argument('-k', '--kml', dest='kml', help='Output kml file.')
+    parser.add_argument('-d', '--dem', dest='dem', nargs='+', help='Digital elevation map files.')
+    parser.add_argument('-g', '--geoid', dest='geoid', help='Geoid model to use as described in ' +
+                        'http://geographiclib.sourceforge.net/html/geoid.html. ' +
+                        'Used with --dem option.')
+    parser.add_argument('-f', dest='filter', choices=filters_name, default='AltitudeRateSmoother',
+                        help='Filtering algorithm to use.')
+    parser.add_argument('-x', dest='x_unit', choices=x_unit, default='Time',
+                        help='Unit of the horizontal axis.')
+    parser.add_argument('-1', dest='axis_1', choices=variables, nargs='+',
+                        help='Variable to be plotted on a first vertical axis.')
+    parser.add_argument('-2', dest='axis_2', choices=variables, nargs='+',
+                        help='Variable to be plotted on a second vertical axis.')
+    parser.add_argument('--legacy', action='store_true', help='Use legacy binary mode.')
+    parser.add_argument('--width', dest='width', type=float, default=6.4, help='Plot width.')
+    parser.add_argument('--height', dest='height', type=float, default=3.6, help='Plot height.')
+    parser.add_argument('--dpi', dest='dpi', type=float, default=100, help='Plot height.')
+    parser.add_argument('--legend', dest='legend', help='Plot legend location.')
+    parser.add_argument('--dpss-smooth', dest='dpss_smooth', action='store_true',
+                        help='Smooth the filtered results using digital Slepian window.')
+    parser.add_argument('--dpss-n', dest='dpss_n', type=int, default=51,
+                        help='Digital Slepian window size.')
+    parser.add_argument('--dpss-width', dest='dpss_width', type=float, default=0.5,
+                        help='Digital Slepian window width.')
+    parser.add_argument('--wavelet-smooth', dest='wavelet_smooth', action='store_true',
+                        help='Smooth the filtered results using wavelet cut-off.')
+    parser.add_argument('--wavelet-levels', dest='wavelet_levels', type=int, default=8,
+                        help='Wavelet level for smoothing cut-off.')
+    parser.add_argument('--wavelet', choices=pywt.wavelist(), dest='wavelet', default='sym4',
+                        help='Wavelet function to use, see pywt.wavelist().')
 
 
-args = parser.parse_args()
-process_arguments(args)
+    args = parser.parse_args()
+    process_arguments(args)

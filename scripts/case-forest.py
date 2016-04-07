@@ -132,32 +132,39 @@ def plot_pressures(reader, filters, prefix, tight=True, width=6.4, height=3.6, d
     plot_plot(file, fig, ax, tight, 'Distance [km]', 'Pressure [hPa]', 'upper right', 'Pressures')
 
 
-# Import and load the SRTM elevation data
-try:
-    elevation = pressalt.GeoFiles(['srtm/srtm_40_02/srtm_40_02.tif',
-                                   'srtm/srtm_41_02/srtm_41_02.tif',
-                                   'srtm/srtm_41_05/srtm_41_05.tif'])
+def initialize_elevation():
     try:
-        import PyGeographicLib
-        geoid = PyGeographicLib.Geoid("egm2008-1")
-    except ImportError as e:
-        warnings.warn("PyGeographicLib module is not available: %s" % str(e))
-        raise
-except (AttributeError, ImportError):
-    elevation = None
-    geoid = None
+        # 90-m elevation data from http://srtm.csi.cgiar.org
+        elevation = pressalt.GeoFiles(['srtm/srtm_40_02/srtm_40_02.tif',
+                                       'srtm/srtm_41_02/srtm_41_02.tif',
+                                       'srtm/srtm_41_05/srtm_41_05.tif'])
+        # SRTM data is given with reference to the mean sea level surface.
+        # https://sourceforge.net/p/geographiclib/code/ci/v1.46/tree/wrapper/python/
+        try:
+            import PyGeographicLib
+            geoid = PyGeographicLib.Geoid("egm2008-1")
+        except ImportError as e:
+            warnings.warn("PyGeographicLib module is not available: %s" % str(e))
+            raise
+        return elevation, geoid
+    except (AttributeError, ImportError):
+        return None, None
 
-# Different filters for comparison
-filters = [('forest-af', pressalt.AltitudeFilter(), '#3f51b5'),
-           ('forest-arf', pressalt.AltitudeRateFilter(), '#8bc34a'),
-           ('forest-ars', pressalt.AltitudeRateSmoother(), '#e91e63')]
 
-# Read recorder file
-reader = pressalt.read_binary('records/forest-20130728.bin', pressalt.GpsPressureReader(), True)
-reader.export_to_kml('forest.kml')
+if __name__ == '__main__':
+    elevation, geoid = initialize_elevation()
+    # Different filters for comparison
+    filters = [('forest-af', pressalt.AltitudeFilter(), '#3f51b5'),
+               ('forest-arf', pressalt.AltitudeRateFilter(), '#8bc34a'),
+               ('forest-ars', pressalt.AltitudeRateSmoother(), '#e91e63')]
 
-# Filter and smooth the record
-for prefix, filter, _ in filters:
-    filter.execute(reader.gps_events, reader.press_events)
-    plot_forest(reader, filter, prefix, tight=False, elev=elevation, geoid=geoid, width=7.0)
-plot_pressures(reader, filters, 'forest', tight=False, width=7.0)
+    # Read recorder file
+    reader = pressalt.read_binary('records/forest-20130728.bin', pressalt.GpsPressureReader(),
+                                  True)
+    reader.export_to_kml('forest.kml')
+
+    # Filter and smooth the record
+    for prefix, filter, _ in filters:
+        filter.execute(reader.gps_events, reader.press_events)
+        plot_forest(reader, filter, prefix, tight=False, elev=elevation, geoid=geoid, width=7.0)
+    plot_pressures(reader, filters, 'forest', tight=False, width=7.0)

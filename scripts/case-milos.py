@@ -137,35 +137,39 @@ def plot_pressures(reader, filters, prefix, tight=True, width=6.4, height=3.6, d
     plot_plot(file, fig, ax, tight, 'Distance [km]', 'Pressure [hPa]', 'upper right', 'Pressures')
 
 
-try:
-    # 90-m elevation data from http://srtm.csi.cgiar.org
-    elevation = pressalt.GeoFiles(['srtm/srtm_40_02/srtm_40_02.tif',
-                                   'srtm/srtm_41_02/srtm_41_02.tif',
-                                   'srtm/srtm_41_05/srtm_41_05.tif'])
-    # SRTM data is given with reference to the mean sea level surface.
-    # https://sourceforge.net/p/geographiclib/code/ci/v1.46/tree/wrapper/python/
+def initialize_elevation():
     try:
-        import PyGeographicLib
-        geoid = PyGeographicLib.Geoid("egm2008-1")
-    except ImportError as e:
-        warnings.warn("PyGeographicLib module is not available: %s" % str(e))
-        raise
-except (AttributeError, ImportError):
-    elevation = None
-    geoid = None
+        # 90-m elevation data from http://srtm.csi.cgiar.org
+        elevation = pressalt.GeoFiles(['srtm/srtm_40_02/srtm_40_02.tif',
+                                       'srtm/srtm_41_02/srtm_41_02.tif',
+                                       'srtm/srtm_41_05/srtm_41_05.tif'])
+        # SRTM data is given with reference to the mean sea level surface.
+        # https://sourceforge.net/p/geographiclib/code/ci/v1.46/tree/wrapper/python/
+        try:
+            import PyGeographicLib
+            geoid = PyGeographicLib.Geoid("egm2008-1")
+        except ImportError as e:
+            warnings.warn("PyGeographicLib module is not available: %s" % str(e))
+            raise
+        return elevation, geoid
+    except (AttributeError, ImportError):
+        return None, None
 
-# Different filters for comparison
-filters = [('milos-af', pressalt.AltitudeFilter(), '#e91e63'),
-           ('milos-arf', pressalt.AltitudeRateFilter(), '#8bc34a'),
-           ('milos-ars', pressalt.AltitudeRateSmoother(), '#3f51b5')]
 
-# Read recorder file
-reader = pressalt.read_binary('records/milos-20130813.bin', pressalt.GpsPressureReader(), True)
-reader.export_to_kml('milos.kml')
+if __name__ == '__main__':
+    elevation, geoid = initialize_elevation()
+    # Different filters for comparison
+    filters = [('milos-af', pressalt.AltitudeFilter(), '#e91e63'),
+               ('milos-arf', pressalt.AltitudeRateFilter(), '#8bc34a'),
+               ('milos-ars', pressalt.AltitudeRateSmoother(), '#3f51b5')]
 
-# Filter and smooth the record
-for prefix, filter, _ in filters:
-    filter.execute(reader.gps_events, reader.press_events)
-    plot_milos(reader, filter, prefix, tight=False, width=7.0, elev=elevation, geoid=geoid)
-plot_altitudes(reader, filters, 'milos', tight=False, width=7.0)
-plot_pressures(reader, filters, 'milos', tight=False, width=7.0)
+    # Read recorder file
+    reader = pressalt.read_binary('records/milos-20130813.bin', pressalt.GpsPressureReader(), True)
+    reader.export_to_kml('milos.kml')
+
+    # Filter and smooth the record
+    for prefix, filter, _ in filters:
+        filter.execute(reader.gps_events, reader.press_events)
+        plot_milos(reader, filter, prefix, tight=False, width=7.0, elev=elevation, geoid=geoid)
+    plot_altitudes(reader, filters, 'milos', tight=False, width=7.0)
+    plot_pressures(reader, filters, 'milos', tight=False, width=7.0)
