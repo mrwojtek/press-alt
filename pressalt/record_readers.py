@@ -267,14 +267,22 @@ class RecordToText(RecordReader):
 
 class RecordBatteryToText(RecordReader):
 
+    def __init__(self, file=sys.stdout):
+        RecordReader.__init__(self)
+        self.file = file
+
     def on_battery(self, millisecond, percent, voltage, temperature):
-        print("%d\tbat\t%f\t%d\t%d" % (millisecond, percent, voltage, temperature))
+        print("%d\tbat\t%f\t%d\t%d" % (millisecond, percent, voltage, temperature), file=self.file)
 
 
 class RecordNmeaToText(RecordReader):
 
+    def __init__(self, file=sys.stdout):
+        RecordReader.__init__(self)
+        self.file = file
+
     def on_nmea(self, millisecond, timestamp, nmea):
-        print("nmea\t%d\t%d\t%s" % (millisecond, timestamp, nmea))
+        print("nmea\t%d\t%d\t%s" % (millisecond, timestamp, nmea), file=self.file)
         
 
 def __read_binary_v10(millisecond, data_type, f, reader):
