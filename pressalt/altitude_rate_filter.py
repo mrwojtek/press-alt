@@ -98,7 +98,8 @@ class AltitudeRateFilter(FilterBase):
                              self._altitude_rate_noise,
                              self._pressure_noise])
 
-                # A priori covariance estimation
+                # A priori state and covariance estimation
+                self._x = F.dot(self._x)
                 self._P = F.dot(self._P.dot(F.T)) + Q * dt
 
                 # Pressure measurement operation
